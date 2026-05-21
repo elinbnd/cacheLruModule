@@ -1,7 +1,10 @@
 package cache
 
-import ("net/http"
-"log")
+import (
+	"fmt"
+	"log"
+	"net/http"
+)
 
 func Middleware(c *Cache, p *Policy) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -17,24 +20,28 @@ func Middleware(c *Cache, p *Policy) func(http.Handler) http.Handler {
 				w.Write(item.Body)
 				return
 			}
+
 			rec := NewRecorder(w)
 			next.ServeHTTP(rec, r)
 			size := len(rec.Body)
 			cacheControl := r.Header.Get("Cache-Control")
 			auth := r.Header.Get("Authorization")
 			if auth != "" {
-				next.ServeHTTP(w, r)
+
 				return
 			}
 			cookie := r.Header.Get("Cookie")
 			if cookie != "" {
-				next.ServeHTTP(w, r)
+
 				return
 			}
 			if cacheControl == "no-cache" {
-				next.ServeHTTP(w, r)
+
 				return
 			}
+			fmt.Println("AUTH ", auth)
+			fmt.Println("COOKIE ", cookie)
+			fmt.Println("KEY ", key)
 			ok, ttl := p.ShouldCache(rec.Status, size, r.Host, r.URL.Path)
 			if ok {
 				headers := make(map[string]string)
