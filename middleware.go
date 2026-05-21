@@ -6,11 +6,11 @@ import (
 	"net/http"
 )
 
-func Middleware(c *Cache, p *Policy) func(http.Handler) http.Handler {
+func Middleware(lru *LRU, p *Policy) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			key := r.Method + ":" + r.URL.String()
-			if item, ok := c.Get(key); ok {
+			if item, ok := lru.GetCache(key); ok {
 				log.Println("cache", key)
 				log.Println("another ", key)
 				for k, v := range item.Headers {
@@ -20,7 +20,7 @@ func Middleware(c *Cache, p *Policy) func(http.Handler) http.Handler {
 				w.Write(item.Body)
 				return
 			}
-
+		
 			rec := NewRecorder(w)
 			next.ServeHTTP(rec, r)
 			size := len(rec.Body)
@@ -40,7 +40,7 @@ func Middleware(c *Cache, p *Policy) func(http.Handler) http.Handler {
 				return
 			}
 			fmt.Println("AUTH ", auth)
-			fmt.Println("COOKIE ", cookie)
+			fmt.Println("COOKIE ",cookie)
 			fmt.Println("KEY ", key)
 			ok, ttl := p.ShouldCache(rec.Status, size, r.Host, r.URL.Path)
 			if ok {
@@ -51,7 +51,7 @@ func Middleware(c *Cache, p *Policy) func(http.Handler) http.Handler {
 				if rec.Header().Get("Cache-Control") == "no-cache" {
 					return
 				}
-				c.Set(key, Item{
+				lru.PutLRU(key, Item{
 					Status:  rec.Status,
 					Body:    rec.Body,
 					Headers: headers,

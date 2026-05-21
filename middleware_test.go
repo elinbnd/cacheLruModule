@@ -7,7 +7,7 @@ import (
 )
 
 func TestNoCacheHeader(test *testing.T) {
-	c := NewCache(10, 100)
+	c := CreateLRUCache(10)
 	cfg := CacheConfig{
 		Global: CacheRule{
 			TTL: 10,
@@ -21,14 +21,14 @@ func TestNoCacheHeader(test *testing.T) {
 	req := httptest.NewRequest("GET", "/test", nil)
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
-	_, ok := c.Get("GET:/test")
+	_, ok := c.GetCache("GET:/test")
 	if ok {
 		test.Error("should not cache")
 	}
 }
 func TestMiddlewareCacheHit(test *testing.T) {
-	c := NewCache(10, 100)
-	c.Set("GET:/test", Item{
+	c := CreateLRUCache(10)
+	c.PutLRU("GET:/test", Item{
 		Status: 200,
 		Body:   []byte("cached"),
 	}, 10)
@@ -46,7 +46,7 @@ func TestMiddlewareCacheHit(test *testing.T) {
 }
 
 func TestMiddlewareAuthorizationSkip(test *testing.T) {
-	c := NewCache(10, 100)
+	c := CreateLRUCache(10)
 	handler := Middleware(c, NewPolicy(CacheConfig{
 		Global: CacheRule{TTL: 10},
 	}))(
@@ -58,13 +58,13 @@ func TestMiddlewareAuthorizationSkip(test *testing.T) {
 	req.Header.Set("Authorization", "Bearer token")
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
-	res, ok := c.Get("GET:/test")
+	res, ok := c.GetCache("GET:/test")
 	if ok {
 		test.Fatal("authorized request should not cache (TestMiddlewareAuthorizationSkip) ", res)
 	}
 }
 func TestMiddlewareCookieSkip(t *testing.T) {
-	c := NewCache(10, 100)
+	c := CreateLRUCache(10)
 	handler := Middleware(c, NewPolicy(CacheConfig{
 		Global: CacheRule{TTL: 10},
 	}))(
@@ -76,7 +76,7 @@ func TestMiddlewareCookieSkip(t *testing.T) {
 	req.Header.Set("Cookie", "session=123")
 	w := httptest.NewRecorder()
 	handler.ServeHTTP(w, req)
-	res, ok := c.Get("GET:/cookie")
+	res, ok := c.GetCache("GET:/cookie")
 	if ok {
 		t.Fatal("cookie request should not cache (TestMiddlewareCookieSkip) ", res)
 	}
