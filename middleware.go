@@ -1,13 +1,15 @@
 package cache
 
-import "net/http"
+import ("net/http"
+"log")
 
 func Middleware(c *Cache, p *Policy) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			key := r.Method + ":" + r.URL.String()
 			if item, ok := c.Get(key); ok {
-				log.print
+				log.Println("cache", key)
+				log.Println("another ", key)
 				for k, v := range item.Headers {
 					w.Header().Set(k, v)
 				}
