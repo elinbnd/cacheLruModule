@@ -20,7 +20,7 @@ func Middleware(lru *LRU, p *Policy) func(http.Handler) http.Handler {
 				w.Write(item.Body)
 				return
 			}
-		
+			// dsada
 			rec := NewRecorder(w)
 			next.ServeHTTP(rec, r)
 			size := len(rec.Body)
@@ -40,7 +40,7 @@ func Middleware(lru *LRU, p *Policy) func(http.Handler) http.Handler {
 				return
 			}
 			fmt.Println("AUTH ", auth)
-			fmt.Println("COOKIE ",cookie)
+			fmt.Println("COOKIE ", cookie)
 			fmt.Println("KEY ", key)
 			ok, ttl := p.ShouldCache(rec.Status, size, r.Host, r.URL.Path)
 			if ok {
