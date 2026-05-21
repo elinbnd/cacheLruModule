@@ -20,12 +20,8 @@ func Middleware(lru *LRU, p *Policy) func(http.Handler) http.Handler {
 				w.Write(item.Body)
 				return
 			}
-			// dsada
-			rec := NewRecorder(w)
-			next.ServeHTTP(rec, r)
-			size := len(rec.Body)
-			cacheControl := r.Header.Get("Cache-Control")
 			auth := r.Header.Get("Authorization")
+			cacheControl := r.Header.Get("Cache-Control")
 			if auth != "" {
 
 				return
@@ -39,6 +35,10 @@ func Middleware(lru *LRU, p *Policy) func(http.Handler) http.Handler {
 
 				return
 			}
+			rec := NewRecorder(w)
+			next.ServeHTTP(rec, r)
+			size := len(rec.Body)
+
 			fmt.Println("AUTH ", auth)
 			fmt.Println("COOKIE ", cookie)
 			fmt.Println("KEY ", key)
