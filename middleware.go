@@ -9,7 +9,7 @@ import (
 func Middleware(lru *LRU, p *Policy) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			key := r.Method + ":" + r.URL.String()
+			key := r.Method + ":" + r.URL.Path + "?" + r.URL.RawQuery
 			if item, ok := lru.GetCache(key); ok {
 				log.Println("cache", key)
 				log.Println("another ", key)
