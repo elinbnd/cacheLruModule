@@ -1,24 +1,28 @@
 package cache
+
 import (
 	"container/list"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
 )
+
 type Elem struct {
-	key string 
+	key       string
 	itemInBox Item
 }
 type LRU struct {
-	info map[string]*list.Element
-	lst *list.List
-	lruCap int 
-	mutex sync.Mutex
+	info   map[string]*list.Element
+	lst    *list.List
+	lruCap int
+	mutex  sync.Mutex
 }
+
 func CreateLRUCache(lruCap int) *LRU {
 	return &LRU{
-		info: make(map[string]*list.Element),
-		lst: list.New(),
+		info:   make(map[string]*list.Element),
+		lst:    list.New(),
 		lruCap: lruCap,
 	}
 }
@@ -44,15 +48,15 @@ func (cache *LRU) PutLRU(key string, item Item, ttl int) {
 	item.Expire = time.Now().Unix() + int64(ttl)
 	// item.Expire = time.Now().Unix() + int(ttl)
 	if element, ok := cache.info[key]; ok {
-		element.Value = Elem {
-			key: key,
+		element.Value = Elem{
+			key:       key,
 			itemInBox: item,
 		}
 		cache.lst.MoveToFront(element)
 		return
 	}
 	newElemInCache := cache.lst.PushFront(Elem{
-		key: key,
+		key:       key,
 		itemInBox: item,
 	})
 	cache.info[key] = newElemInCache
@@ -74,6 +78,20 @@ func (cache *LRU) DeleteFromLRU(kDelete string) {
 	}
 	cache.lst.Remove(element)
 	delete(cache.info, kDelete)
+}
+func (cache *LRU) DeleteRegex(exp string) {
+	cache.mutex.Lock()
+	defer cache.mutex.Unlock()
+	for key, element := range cache.info {
+		ifOk, err := regexp.MatchString(exp, key)
+		if err != nil {
+			return
+		}
+		if ifOk {
+			cache.lst.Remove(element)
+			delete(cache.info, key)
+		}
+	}
 }
 func (cache *LRU) ClearCache() {
 	cache.mutex.Lock()

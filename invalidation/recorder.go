@@ -1,4 +1,4 @@
-package cache
+package invalidation
 import "net/http"
 type Recorder struct {
 	writer http.ResponseWriter

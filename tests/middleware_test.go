@@ -1,20 +1,24 @@
-package cache
+package tests
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/elinbnd/cacheLruModule/biznesLogic"
+	"github.com/elinbnd/cacheLruModule/cache"
+	"github.com/elinbnd/cacheLruModule/middleware"
 )
 
 func TestNoCacheHeader(test *testing.T) {
-	c := CreateLRUCache(10)
-	cfg := CacheConfig{
-		Global: CacheRule{
+	c := cache.CreateLRUCache(10)
+	cfg := biznesLogic.CacheConfig{
+		Global: biznesLogic.CacheRule{
 			TTL: 10,
 		},
 	}
-	policy := NewPolicy(cfg)
-	handler := Middleware(c, policy)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	policy := biznesLogic.NewPolicy(cfg)
+	handler := middleware.Middleware(c, policy)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", "no-cache")
 		w.Write([]byte("data"))
 	}))
@@ -27,12 +31,12 @@ func TestNoCacheHeader(test *testing.T) {
 	}
 }
 func TestMiddlewareCacheHit(test *testing.T) {
-	c := CreateLRUCache(10)
-	c.PutLRU("GET:/test", Item{
+	c := cache.CreateLRUCache(10)
+	c.PutLRU("GET:/test", cache.Item{
 		Status: 200,
 		Body:   []byte("cached"),
 	}, 10)
-	handler := Middleware(c, NewPolicy(CacheConfig{}))(
+	handler := middleware.Middleware(c, biznesLogic.NewPolicy(biznesLogic.CacheConfig{}))(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			test.Fatal("handler should not execute (TestMiddlewareCacheHit)")
 		}),
@@ -46,9 +50,9 @@ func TestMiddlewareCacheHit(test *testing.T) {
 }
 
 func TestMiddlewareAuthorizationSkip(test *testing.T) {
-	c := CreateLRUCache(10)
-	handler := Middleware(c, NewPolicy(CacheConfig{
-		Global: CacheRule{TTL: 10},
+	c := cache.CreateLRUCache(10)
+	handler := middleware.Middleware(c, biznesLogic.NewPolicy(biznesLogic.CacheConfig{
+		Global: biznesLogic.CacheRule{TTL: 10},
 	}))(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("ok"))
@@ -64,9 +68,9 @@ func TestMiddlewareAuthorizationSkip(test *testing.T) {
 	}
 }
 func TestMiddlewareCookieSkip(t *testing.T) {
-	c := CreateLRUCache(10)
-	handler := Middleware(c, NewPolicy(CacheConfig{
-		Global: CacheRule{TTL: 10},
+	c := cache.CreateLRUCache(10)
+	handler := middleware.Middleware(c, biznesLogic.NewPolicy(biznesLogic.CacheConfig{
+		Global: biznesLogic.CacheRule{TTL: 10},
 	}))(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("ok"))

@@ -1,4 +1,4 @@
-package cache
+package biznesLogic
 import "strings"
 type Policy struct {
 	cfg CacheConfig

@@ -1,14 +1,14 @@
-package cache
-
+package invalidation
+import "github.com/elinbnd/cacheLruModule/cache"
 import (
 	"testing"
 	"time"
 )
 
 func TestDeleteEvent(test *testing.T) {
-	lru := CreateLRUCache(10)
+	lru := cache.CreateLRUCache(10)
 	StartEventsHandler(lru)
-	lru.PutLRU("k1", Item{}, 10)
+	lru.PutLRU("k1", cache.Item{}, 10)
 	AllEventsChannel <- EventsHandler{
 		TypeEvent: "delete_key",
 		KeyEvent:  "k1",

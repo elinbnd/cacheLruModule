@@ -1,11 +1,12 @@
-package cache
+package tests
 import (
 	"testing"
 	"time"
+	"github.com/elinbnd/cacheLruModule/cache"
 )
 func TestLRUPutAndGet(test *testing.T) {
-	lru := CreateLRUCache(2)
-	lru.PutLRU("k1", Item{Status: 200}, 10)
+	lru := cache.CreateLRUCache(2)
+	lru.PutLRU("k1", cache.Item{Status: 200}, 10)
 	item, ok := lru.GetCache("k1")
 	if !ok {
 		test.Fatal("404 item not found (TestLRUPutAndGet)")
@@ -16,8 +17,8 @@ func TestLRUPutAndGet(test *testing.T) {
 	}
 }
 func TestLRUExpire(test *testing.T) {
-	lru := CreateLRUCache(2)
-	lru.PutLRU("k1", Item{Status: 200}, 1)
+	lru := cache.CreateLRUCache(2)
+	lru.PutLRU("k1", cache.Item{Status: 200}, 1)
 	time.Sleep(2 * time.Second)
 	value, ok := lru.GetCache("k1")
 	if ok {
@@ -25,18 +26,18 @@ func TestLRUExpire(test *testing.T) {
 	}
 }
 func TestLRUCapacity(test *testing.T) {
-	lru := CreateLRUCache(2)
-	lru.PutLRU("k1", Item{}, 10)
-	lru.PutLRU("k2", Item{}, 10)
-	lru.PutLRU("k3", Item{}, 10)
+	lru := cache.CreateLRUCache(2)
+	lru.PutLRU("k1", cache.Item{}, 10)
+	lru.PutLRU("k2", cache.Item{}, 10)
+	lru.PutLRU("k3", cache.Item{}, 10)
 	res, ok := lru.GetCache("k1")
 	if ok {
 		test.Fatal("oldest item need deleted (TestLRUExpire)", res)
 	}
 }
 func TestDeleteFromLRU(test *testing.T) {
-	lru := CreateLRUCache(2)
-	lru.PutLRU("k1", Item{}, 10)
+	lru := cache.CreateLRUCache(2)
+	lru.PutLRU("k1", cache.Item{}, 10)
 	lru.DeleteFromLRU("k1")
 	res, ok := lru.GetCache("k1")
 	if ok {
@@ -44,8 +45,8 @@ func TestDeleteFromLRU(test *testing.T) {
 	}
 }
 func TestClearLRU(test *testing.T) {
-	lru := CreateLRUCache(2)
-	lru.PutLRU("k1", Item{}, 10)
+	lru := cache.CreateLRUCache(2)
+	lru.PutLRU("k1", cache.Item{}, 10)
 	lru.ClearCache()
 	res, ok := lru.GetCache("k1")
 	if ok {

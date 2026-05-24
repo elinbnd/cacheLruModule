@@ -1,14 +1,22 @@
-package cache
+package middleware
 
 import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/elinbnd/cacheLruModule/biznesLogic"
+	"github.com/elinbnd/cacheLruModule/cache"
+	"github.com/elinbnd/cacheLruModule/invalidation"
 )
 
-func Middleware(lru *LRU, p *Policy) func(http.Handler) http.Handler {
+func Middleware(lru *cache.LRU, p *biznesLogic.Policy) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Method != http.MethodGet {
+				next.ServeHTTP(w, r)
+				return
+			}
 			key := r.Method + ":" + r.URL.Path + "?" + r.URL.RawQuery
 			if item, ok := lru.GetCache(key); ok {
 				log.Println("cache", key)
@@ -35,7 +43,7 @@ func Middleware(lru *LRU, p *Policy) func(http.Handler) http.Handler {
 
 				return
 			}
-			rec := NewRecorder(w)
+			rec := invalidation.NewRecorder(w)
 			next.ServeHTTP(rec, r)
 			size := len(rec.Body)
 
@@ -51,7 +59,7 @@ func Middleware(lru *LRU, p *Policy) func(http.Handler) http.Handler {
 				if rec.Header().Get("Cache-Control") == "no-cache" {
 					return
 				}
-				lru.PutLRU(key, Item{
+				lru.PutLRU(key, cache.Item{
 					Status:  rec.Status,
 					Body:    rec.Body,
 					Headers: headers,

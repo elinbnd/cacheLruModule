@@ -1,4 +1,4 @@
-package cache
+package biznesLogic
 type CacheRule struct {
 	Domain string
 	Path string
