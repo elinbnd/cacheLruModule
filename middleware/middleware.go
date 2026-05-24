@@ -17,6 +17,13 @@ func Middleware(lru *cache.LRU, p *biznesLogic.Policy) func(http.Handler) http.H
 				next.ServeHTTP(w, r)
 				return
 			}
+			auth := r.Header.Get("Authorization")
+			cacheControl := r.Header.Get("Cache-Control")
+			cookie := r.Header.Get("Cookie")
+			if auth != "" || cookie != "" || cacheControl == "no-cache" {
+				next.ServeHTTP(w, r)
+				return
+			}
 			key := r.Method + ":" + r.URL.Path + "?" + r.URL.RawQuery
 			if item, ok := lru.GetCache(key); ok {
 				log.Println("cache", key)
@@ -28,13 +35,7 @@ func Middleware(lru *cache.LRU, p *biznesLogic.Policy) func(http.Handler) http.H
 				w.Write(item.Body)
 				return
 			}
-			auth := r.Header.Get("Authorization")
-			cacheControl := r.Header.Get("Cache-Control")
-			cookie := r.Header.Get("Cookie")
-			if auth != "" || cookie != "" || cacheControl == "no-cache" {
-				next.ServeHTTP(w, r)
-				return
-			}
+			
 
 			rec := invalidation.NewRecorder(w)
 			next.ServeHTTP(rec, r)
