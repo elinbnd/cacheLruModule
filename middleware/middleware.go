@@ -30,19 +30,12 @@ func Middleware(lru *cache.LRU, p *biznesLogic.Policy) func(http.Handler) http.H
 			}
 			auth := r.Header.Get("Authorization")
 			cacheControl := r.Header.Get("Cache-Control")
-			if auth != "" {
-
-				return
-			}
 			cookie := r.Header.Get("Cookie")
-			if cookie != "" {
-
+			if auth != "" || cookie != "" || cacheControl == "no-cache" {
+				next.ServeHTTP(w, r)
 				return
 			}
-			if cacheControl == "no-cache" {
 
-				return
-			}
 			rec := invalidation.NewRecorder(w)
 			next.ServeHTTP(rec, r)
 			size := len(rec.Body)
